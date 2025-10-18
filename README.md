@@ -2,13 +2,13 @@
 
 This repository contains a easily debuggable neural processing unit (NPU) slice that focuses on matrix multiply-accumulate (MAC) throughput. The design targets a 4x4 INT8 outer-product engine, but everything is parameterised so you can scale array size, data width, accumulator guard bits, or swap the activation.
 
-PIPELINED_NPU/
-├── build/           # Build artifacts / compiled testbench outputs
+PIPELINED_NPU
+├── build           # Build artifacts / compiled testbench outputs
 │   └── npu_tb       # Executable binary for testbench (not HDL)
-├── rtl/             # RTL (Register Transfer Level) – your actual NPU design
+├── rtl             # RTL (Register Transfer Level) – your actual NPU design
 │   ├── npu_core.sv  # Top-level NPU module
 │   └── pe.sv        # Processing Element (PE) – core MAC unit
-├── tb/              # Testbenches for simulation
+├── tb              # Testbenches for simulation
 │   └── npu_core_tb.sv # Testbench for npu_core
 └── README.md        # Project description 
 
