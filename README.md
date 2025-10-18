@@ -1,6 +1,6 @@
 ## Pipelined INT8 NPU Core
 
-This repository contains a tiny, easily debuggable neural processing unit (NPU) slice that focuses on matrix multiply-accumulate (MAC) throughput. The design targets a 4x4 INT8 outer-product engine, but everything is parameterised so you can scale array size, data width, accumulator guard bits, or swap the activation.
+This repository contains a easily debuggable neural processing unit (NPU) slice that focuses on matrix multiply-accumulate (MAC) throughput. The design targets a 4x4 INT8 outer-product engine, but everything is parameterised so you can scale array size, data width, accumulator guard bits, or swap the activation.
 
 ### Highlights
 - **Two-stage operand pipeline** broadcasts one column of `A` and one row of `B` each cycle and keeps all MACs busy once primed.
