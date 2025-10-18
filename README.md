@@ -2,6 +2,17 @@
 
 This repository contains a easily debuggable neural processing unit (NPU) slice that focuses on matrix multiply-accumulate (MAC) throughput. The design targets a 4x4 INT8 outer-product engine, but everything is parameterised so you can scale array size, data width, accumulator guard bits, or swap the activation.
 
+PIPELINED_NPU/
+├── build/           # Build artifacts / compiled testbench outputs
+│   └── npu_tb       # Executable binary for testbench (not HDL)
+├── rtl/             # RTL (Register Transfer Level) – your actual NPU design
+│   ├── npu_core.sv  # Top-level NPU module
+│   └── pe.sv        # Processing Element (PE) – core MAC unit
+├── tb/              # Testbenches for simulation
+│   └── npu_core_tb.sv # Testbench for npu_core
+└── README.md        # Project description 
+
+
 ### Highlights
 - **Two-stage operand pipeline** broadcasts one column of `A` and one row of `B` each cycle and keeps all MACs busy once primed.
 - **Automatic accumulator sizing** derives the minimum number of bits from `ARRAY_SIZE` and `DATA_WIDTH`. An extra guard parameter lets you add safety margin; the RTL will `\$error` if you under-configure it.
@@ -75,7 +86,3 @@ Sample output includes the raw GEMM, the ReLU-activated version, and the streami
 - Use the packed output (`c_out_flat`) for quick scoreboarding; switch to the stream when integrating with DMA/FIFO logic.
 - Modify `EXTRA_ACC_BITS` in the testbench to stress accumulator overflow or to emulate lower-precision accumulators.
 
-### Next Ideas
-- Swap ReLU for a programmable activation/LUT.
-- Replace the simple streaming logic with an AXI-Stream shell and add skid buffers.
-- Hook the C++ host into a cocotb/Verilator harness to co-simulate software and RTL.
