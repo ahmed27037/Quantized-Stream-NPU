@@ -359,6 +359,4 @@ Use this to cross-check hardware simulation results.
 
 ---
 
-## License
 
-[Specify your license here]
