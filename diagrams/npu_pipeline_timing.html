@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPU - Pipeline and Timing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 40px;
+            color: black;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 40px;
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
+        }
+
+        .section {
+            border: 2px solid black;
+            padding: 20px;
+            margin: 30px 0;
+            background: white;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid black;
+            padding-bottom: 5px;
+        }
+
+        .phase-box {
+            border: 2px solid black;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+        }
+
+        .phase-title {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid black;
+            padding-bottom: 5px;
+        }
+
+        .phase-content {
+            font-size: 11px;
+            line-height: 1.6;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timing-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 10px;
+        }
+
+        .timing-table th,
+        .timing-table td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .timing-table th {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+
+        .pipeline-flow {
+            border: 2px solid black;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+        }
+
+        .cycle-row {
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+
+        .cycle-label {
+            font-weight: bold;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+
+        .stage-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 10px;
+        }
+
+        .stage-box {
+            border: 1px solid black;
+            padding: 8px;
+            background: white;
+        }
+
+        .streaming-table {
+            border: 2px solid black;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+        }
+
+        .index-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            margin: 15px 0;
+        }
+
+        .index-cell {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+            font-size: 9px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">NPU Pipeline Stages and Timing</div>
+
+    <!-- Operation Phases -->
+    <div class="section">
+        <div class="section-title">Operation Phases</div>
+        
+        <div class="phase-box">
+            <div class="phase-title">Phase 1: Input Loading (ARRAY_SIZE cycles)</div>
+            <div class="phase-content">
+                <strong>Cycle 0:</strong> start = 1 → Clear all accumulators<br><br>
+                <strong>Cycles 1-4:</strong> in_valid = 1<br>
+                &nbsp;&nbsp;a_stream[31:0] = A[:, k]  (column k of matrix A)<br>
+                &nbsp;&nbsp;b_stream[31:0] = B[k, :]  (row k of matrix B)<br>
+                &nbsp;&nbsp;k increments from 0 to 3
+            </div>
+        </div>
+
+        <div class="phase-box">
+            <div class="phase-title">Phase 2: Completion</div>
+            <div class="phase-content">
+                After 4 cycles (ARRAY_SIZE):<br>
+                • done = 1<br>
+                • c_valid = 1<br>
+                • All accumulators contain final results<br>
+                • acc_matrix[row][col] = C[row][col] = Σ(A[row][k] × B[k][col])
+            </div>
+        </div>
+
+        <div class="phase-box">
+            <div class="phase-title">Phase 3: Streaming Output</div>
+            <div class="phase-content">
+                done → Launch streaming state machine<br><br>
+                For each element in row-major order (0 to 15):<br>
+                • Wait for result_ready<br>
+                • Assert result_valid<br>
+                • Output result_data = act_matrix[row][col]<br>
+                • Output result_index (current index)<br>
+                • Advance row/column counters
+            </div>
+        </div>
+    </div>
+
+    <!-- Pipeline Flow -->
+    <div class="section">
+        <div class="section-title">Pipeline Flow Example</div>
+        
+        <div class="pipeline-flow">
+            <div class="cycle-row">
+                <div class="cycle-label">Cycle k:</div>
+                <div class="stage-info">
+                    <div class="stage-box">
+                        <strong>Stage 0:</strong><br>
+                        Load a_stream, b_stream<br>
+                        valid_stage0 = 1
+                    </div>
+                    <div class="stage-box">
+                        <strong>Stage 1:</strong><br>
+                        (empty)
+                    </div>
+                    <div class="stage-box">
+                        <strong>PE Array:</strong><br>
+                        (cleared or idle)
+                    </div>
+                </div>
+            </div>
+
+            <div class="cycle-row">
+                <div class="cycle-label">Cycle k+1:</div>
+                <div class="stage-info">
+                    <div class="stage-box">
+                        <strong>Stage 0:</strong><br>
+                        Load next column<br>
+                        valid_stage0 = 1
+                    </div>
+                    <div class="stage-box">
+                        <strong>Stage 1:</strong><br>
+                        Latch from stage 0<br>
+                        Broadcast a[0..3], b[0..3]<br>
+                        valid_stage1 = 1
+                    </div>
+                    <div class="stage-box">
+                        <strong>PE Array:</strong><br>
+                        PE[i][j] += a[i] × b[j]<br>
+                        (k=0 iteration)
+                    </div>
+                </div>
+            </div>
+
+            <div class="cycle-row">
+                <div class="cycle-label">Cycle k+2:</div>
+                <div class="stage-info">
+                    <div class="stage-box">
+                        <strong>Stage 0:</strong><br>
+                        Load next column<br>
+                        valid_stage0 = 1
+                    </div>
+                    <div class="stage-box">
+                        <strong>Stage 1:</strong><br>
+                        Latch from stage 0<br>
+                        Broadcast a[0..3], b[0..3]<br>
+                        valid_stage1 = 1
+                    </div>
+                    <div class="stage-box">
+                        <strong>PE Array:</strong><br>
+                        PE[i][j] += a[i] × b[j]<br>
+                        (k=1 iteration)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row-Major Order -->
+    <div class="section">
+        <div class="section-title">Streaming Output - Row-Major Order</div>
+        
+        <div class="streaming-table">
+            <div class="phase-title">Output Index Mapping (4×4 Matrix)</div>
+            <div class="index-grid">
+                <div class="index-cell">0<br>[0,0]</div>
+                <div class="index-cell">1<br>[0,1]</div>
+                <div class="index-cell">2<br>[0,2]</div>
+                <div class="index-cell">3<br>[0,3]</div>
+                <div class="index-cell">4<br>[1,0]</div>
+                <div class="index-cell">5<br>[1,1]</div>
+                <div class="index-cell">6<br>[1,2]</div>
+                <div class="index-cell">7<br>[1,3]</div>
+                <div class="index-cell">8<br>[2,0]</div>
+                <div class="index-cell">9<br>[2,1]</div>
+                <div class="index-cell">10<br>[2,2]</div>
+                <div class="index-cell">11<br>[2,3]</div>
+                <div class="index-cell">12<br>[3,0]</div>
+                <div class="index-cell">13<br>[3,1]</div>
+                <div class="index-cell">14<br>[3,2]</div>
+                <div class="index-cell">15<br>[3,3]</div>
+            </div>
+            <div class="phase-content" style="margin-top: 15px;">
+                Streaming sequence: result_index increments from 0 to 15<br>
+                Each cycle outputs: result_data = act_matrix[row][col] where row = index/4, col = index%4
+            </div>
+        </div>
+    </div>
+
+    <!-- Activation Function -->
+    <div class="section">
+        <div class="section-title">Activation Function</div>
+        
+        <table class="timing-table">
+            <thead>
+                <tr>
+                    <th>ACT_FUNC</th>
+                    <th>Function</th>
+                    <th>Operation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>0</td>
+                    <td>Identity</td>
+                    <td>act_matrix[row][col] = acc_matrix[row][col]<br>(Pass-through, no modification)</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>ReLU</td>
+                    <td>if (acc_matrix[row][col] &lt; 0)<br>&nbsp;&nbsp;act_matrix[row][col] = 0<br>else<br>&nbsp;&nbsp;act_matrix[row][col] = acc_matrix[row][col]<br>(Clamp negatives to zero)</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="phase-box" style="margin-top: 20px;">
+            <div class="phase-title">Implementation</div>
+            <div class="phase-content">
+                Check MSB (sign bit): acc_matrix[row][col][ACC_WIDTH-1]<br>
+                If negative (MSB = 1): act_matrix[row][col] = 0<br>
+                If positive (MSB = 0): act_matrix[row][col] = acc_matrix[row][col]
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

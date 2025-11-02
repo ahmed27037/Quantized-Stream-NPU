@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPU - PE Array Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 40px;
+            color: black;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 40px;
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
+        }
+
+        .section {
+            border: 2px solid black;
+            padding: 20px;
+            margin: 30px 0;
+            background: white;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid black;
+            padding-bottom: 5px;
+        }
+
+        .pe-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+
+        .pe-cell {
+            border: 2px solid black;
+            padding: 15px;
+            text-align: center;
+            background: white;
+        }
+
+        .pe-id {
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid black;
+            padding-bottom: 5px;
+        }
+
+        .pe-operation {
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .broadcast-labels {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 15px auto;
+            max-width: 600px;
+        }
+
+        .broadcast-label {
+            border: 2px solid black;
+            padding: 10px;
+            text-align: center;
+            background: white;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+        }
+
+        .pe-internal {
+            border: 2px solid black;
+            padding: 15px;
+            margin: 20px 0;
+            background: white;
+        }
+
+        .pe-component {
+            border: 1px solid black;
+            padding: 10px;
+            margin: 10px 0;
+            background: white;
+        }
+
+        .component-title {
+            font-weight: bold;
+            font-size: 11px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid black;
+            padding-bottom: 3px;
+        }
+
+        .component-desc {
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .algorithm-box {
+            border: 2px solid black;
+            padding: 15px;
+            margin: 20px 0;
+            background: white;
+        }
+
+        .algorithm-step {
+            border-left: 3px solid black;
+            padding-left: 15px;
+            margin: 10px 0;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">NPU - Processing Element Array Architecture</div>
+
+    <!-- Algorithm -->
+    <div class="section">
+        <div class="section-title">Outer-Product Algorithm: C = A × B</div>
+        
+        <div class="algorithm-box">
+            <div class="algorithm-step">
+                <strong>For k = 0 to 3:</strong>
+            </div>
+            <div class="algorithm-step">
+                Broadcast A[:, k] (column k of A) → a_stage1[0..3]
+            </div>
+            <div class="algorithm-step">
+                Broadcast B[k, :] (row k of B) → b_stage1[0..3]
+            </div>
+            <div class="algorithm-step">
+                Each PE[row][col] computes:<br>
+                &nbsp;&nbsp;acc[row][col] += a_stage1[row] × b_stage1[col]
+            </div>
+            <div class="algorithm-step">
+                This computes: C[row][col] += A[row][k] × B[k][col]
+            </div>
+        </div>
+    </div>
+
+    <!-- PE Array -->
+    <div class="section">
+        <div class="section-title">4×4 PE Array Structure</div>
+        
+        <!-- Broadcast A -->
+        <div class="broadcast-labels">
+            <div class="broadcast-label">a[0]<br>↓</div>
+            <div class="broadcast-label">a[1]<br>↓</div>
+            <div class="broadcast-label">a[2]<br>↓</div>
+            <div class="broadcast-label">a[3]<br>↓</div>
+        </div>
+
+        <!-- PE Grid -->
+        <div class="pe-grid">
+            <div class="pe-cell">
+                <div class="pe-id">PE[0][0]</div>
+                <div class="pe-operation">acc += a[0]×b[0]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[0][1]</div>
+                <div class="pe-operation">acc += a[0]×b[1]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[0][2]</div>
+                <div class="pe-operation">acc += a[0]×b[2]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[0][3]</div>
+                <div class="pe-operation">acc += a[0]×b[3]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[1][0]</div>
+                <div class="pe-operation">acc += a[1]×b[0]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[1][1]</div>
+                <div class="pe-operation">acc += a[1]×b[1]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[1][2]</div>
+                <div class="pe-operation">acc += a[1]×b[2]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[1][3]</div>
+                <div class="pe-operation">acc += a[1]×b[3]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[2][0]</div>
+                <div class="pe-operation">acc += a[2]×b[0]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[2][1]</div>
+                <div class="pe-operation">acc += a[2]×b[1]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[2][2]</div>
+                <div class="pe-operation">acc += a[2]×b[2]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[2][3]</div>
+                <div class="pe-operation">acc += a[2]×b[3]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[3][0]</div>
+                <div class="pe-operation">acc += a[3]×b[0]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[3][1]</div>
+                <div class="pe-operation">acc += a[3]×b[1]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[3][2]</div>
+                <div class="pe-operation">acc += a[3]×b[2]</div>
+            </div>
+            <div class="pe-cell">
+                <div class="pe-id">PE[3][3]</div>
+                <div class="pe-operation">acc += a[3]×b[3]</div>
+            </div>
+        </div>
+
+        <!-- Broadcast B -->
+        <div class="broadcast-labels">
+            <div class="broadcast-label">← b[0]</div>
+            <div class="broadcast-label">← b[1]</div>
+            <div class="broadcast-label">← b[2]</div>
+            <div class="broadcast-label">← b[3]</div>
+        </div>
+    </div>
+
+    <!-- PE Internal Structure -->
+    <div class="section">
+        <div class="section-title">Individual PE (Processing Element) Architecture</div>
+        
+        <div class="pe-internal">
+            <div class="pe-component">
+                <div class="component-title">Multiply Unit</div>
+                <div class="component-desc">
+                    Input: a_value[DATA_WIDTH-1:0], b_value[DATA_WIDTH-1:0]<br>
+                    Output: product[2×DATA_WIDTH-1:0]<br>
+                    Operation: Signed multiplication
+                </div>
+            </div>
+
+            <div class="pe-component">
+                <div class="component-title">Sign Extension</div>
+                <div class="component-desc">
+                    Input: product[2×DATA_WIDTH-1:0]<br>
+                    Output: product_ext[ACC_WIDTH-1:0]<br>
+                    Extends sign bit to ACC_WIDTH bits
+                </div>
+            </div>
+
+            <div class="pe-component">
+                <div class="component-title">Accumulator</div>
+                <div class="component-desc">
+                    Register: acc_out[ACC_WIDTH-1:0]<br>
+                    Operation: acc_out <= acc_out + product_ext (when enable)<br>
+                    Clear: acc_out <= 0 (when clear)
+                </div>
+            </div>
+
+            <div class="pe-component">
+                <div class="component-title">Control Signals</div>
+                <div class="component-desc">
+                    clear: Reset accumulator (on start signal)<br>
+                    enable: valid_stage1 (enable accumulation)<br>
+                    clk, rst: Clock and reset
+                </div>
+            </div>
+        </div>
+
+        <div class="algorithm-box">
+            <div class="section-title" style="font-size: 14px; margin-bottom: 10px;">Accumulator Sizing Formula</div>
+            <div class="algorithm-step">
+                MIN_ACC_WIDTH = (2 × DATA_WIDTH) + ceil(log2(ARRAY_SIZE))
+            </div>
+            <div class="algorithm-step">
+                Example (INT8, 4×4):<br>
+                DATA_WIDTH = 8, ARRAY_SIZE = 4<br>
+                MIN_ACC_WIDTH = 16 + 2 = 18 bits<br>
+                With EXTRA_ACC_BITS = 2: ACC_WIDTH = 20 bits
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
