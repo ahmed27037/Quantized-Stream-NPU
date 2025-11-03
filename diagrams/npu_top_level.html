@@ -3,377 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NPU - Top Level Architecture</title>
+    <title>NPU - Top Level</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Courier New', monospace;
-            background: white;
-            padding: 40px;
-            color: black;
-        }
-
-        .title {
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 40px;
-            border-bottom: 2px solid black;
-            padding-bottom: 10px;
-        }
-
-        .diagram {
-            position: relative;
-            width: 100%;
-            min-height: 1000px;
-        }
-
-        .block {
-            border: 2px solid black;
-            background: white;
-            padding: 15px;
-        }
-
-        .block-title {
-            font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 8px;
-            border-bottom: 1px solid black;
-            padding-bottom: 5px;
-        }
-
-        .block-content {
-            font-size: 11px;
-            line-height: 1.5;
-        }
-
-        .input-section {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .input-box {
-            display: inline-block;
-            border: 2px solid black;
-            padding: 12px 20px;
-            margin: 0 10px;
-            background: white;
-        }
-
-        .main-module {
-            border: 2px solid black;
-            padding: 20px;
-            margin: 30px 0;
-            background: white;
-        }
-
-        .sub-block {
-            border: 2px solid black;
-            padding: 12px;
-            margin: 15px 0;
-            background: white;
-        }
-
-        .sub-block-title {
-            font-weight: bold;
-            font-size: 12px;
-            margin-bottom: 8px;
-            border-bottom: 1px solid black;
-            padding-bottom: 3px;
-        }
-
-        .control-states {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .state-box {
-            border: 2px solid black;
-            padding: 10px;
-            text-align: center;
-            background: white;
-        }
-
-        .state-name {
-            font-weight: bold;
-            font-size: 11px;
-            margin-bottom: 5px;
-        }
-
-        .pipeline-stages {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 15px 0;
-        }
-
-        .pipeline-stage {
-            border: 2px solid black;
-            padding: 12px;
-            background: white;
-        }
-
-        .pe-array-container {
-            border: 2px solid black;
-            padding: 15px;
-            margin: 15px 0;
-            background: white;
-        }
-
-        .pe-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin: 15px auto;
-            max-width: 500px;
-        }
-
-        .pe-cell {
-            border: 2px solid black;
-            padding: 12px;
-            text-align: center;
-            background: white;
-            font-size: 10px;
-        }
-
-        .pe-id {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .output-section {
-            border: 2px solid black;
-            padding: 15px;
-            margin: 30px 0;
-            background: white;
-        }
-
-        .output-modes {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .output-mode {
-            border: 1px solid black;
-            padding: 12px;
-            background: white;
-        }
-
-        .arrow-down {
-            text-align: center;
-            margin: 15px 0;
-            font-size: 20px;
-        }
-
-        .signal-label {
-            font-size: 10px;
-            text-align: center;
-            margin: 5px 0;
-            font-family: 'Courier New', monospace;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: white; padding: 8px; color: #333; }
+        .title { text-align: center; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #222; }
+        .block { border: 1.5px solid #333; border-radius: 6px; background: white; padding: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .block-title { font-weight: bold; font-size: 8px; margin-bottom: 2px; color: #222; }
+        .block-content { font-size: 7px; line-height: 1.2; color: #555; }
+        .input-section { text-align: center; margin-bottom: 6px; }
+        .input-box { display: inline-block; border: 1.5px solid #555; border-radius: 4px; padding: 4px 6px; margin: 0 4px; background: #e8f4f8; vertical-align: top; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .input-box .block-title, .input-box .block-content { text-align: center; }
+        .main-module { border: 1.5px solid #333; border-radius: 6px; padding: 6px; margin: 6px auto; background: #f5f0ff; max-width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .sub-block { border: 1.5px solid #555; border-radius: 4px; padding: 4px; margin: 4px 0; background: white; }
+        .sub-block-title { font-weight: bold; font-size: 8px; margin-bottom: 2px; color: #222; padding-bottom: 2px; border-bottom: 1px solid #ccc; text-align: left; }
+        .control-states { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; margin: 4px 0; }
+        .state-box { border: 1.5px solid #555; border-radius: 3px; padding: 3px; text-align: center; background: #fff8e8; font-size: 7px; }
+        .state-name { font-weight: bold; color: #222; }
+        .pipeline-stages { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 4px 0; }
+        .pipeline-stage { border: 1.5px solid #555; border-radius: 4px; padding: 4px; background: #f0fff0; }
+        .pipeline-stage .sub-block-title { text-align: left; }
+        .pe-array-container { border: 1.5px solid #555; border-radius: 4px; padding: 5px; margin: 4px 0; background: #fff9e6; }
+        .pe-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; margin: 4px auto; max-width: 360px; }
+        .pe-cell { border: 1.5px solid #666; border-radius: 3px; padding: 3px; text-align: center; background: white; font-size: 7px; }
+        .pe-id { font-weight: bold; color: #222; }
+        .output-section { border: 1.5px solid #333; border-radius: 6px; padding: 6px; margin: 6px auto; background: #ffe8f0; max-width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .output-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; }
+        .output-mode { border: 1.5px solid #555; border-radius: 4px; padding: 4px; background: white; }
+        .output-mode .sub-block-title { text-align: left; }
+        .arrow-down { text-align: center; margin: 3px auto; font-size: 12px; width: 20px; color: #333; }
+        .signal-label { font-size: 7px; text-align: center; margin: 2px auto; display: block; max-width: 100%; font-weight: 500; color: #555; }
     </style>
 </head>
 <body>
     <div class="title">Quantized-Stream NPU Core - Top Level</div>
-    
-    <div class="diagram">
-        <!-- Input Section -->
-        <div class="input-section">
-            <div class="input-box">
-                <div class="block-title">Control</div>
-                <div class="block-content">start<br>in_valid</div>
+    <div class="input-section">
+        <div class="input-box"><div class="block-title">Control</div><div class="block-content">start<br>in_valid</div></div>
+        <div class="input-box"><div class="block-title">Matrix A</div><div class="block-content">a_stream[31:0]<br>Column of A</div></div>
+        <div class="input-box"><div class="block-title">Matrix B</div><div class="block-content">b_stream[31:0]<br>Row of B</div></div>
+    </div>
+    <div class="arrow-down">↓</div>
+    <div class="main-module">
+        <div class="block-title" style="text-align: center; font-size: 9px;">npu_core.sv</div>
+        <div class="sub-block">
+            <div class="sub-block-title">Control State Machine</div>
+            <div class="control-states">
+                <div class="state-box"><div class="state-name">Idle</div>Waiting for start</div>
+                <div class="state-box"><div class="state-name">Active</div>Computing</div>
+                <div class="state-box"><div class="state-name">Done</div>Complete</div>
+                <div class="state-box"><div class="state-name">Streaming</div>Output phase</div>
             </div>
-            <div class="input-box">
-                <div class="block-title">Matrix A</div>
-                <div class="block-content">a_stream[31:0]<br>Column of A</div>
-            </div>
-            <div class="input-box">
-                <div class="block-title">Matrix B</div>
-                <div class="block-content">b_stream[31:0]<br>Row of B</div>
+            <div class="block-content" style="margin-top: 3px; text-align: center; font-size: 7px; color: #555;">feed_count: 0-ARRAY_SIZE | processed_count: Accum cycles</div>
+        </div>
+        <div class="sub-block">
+            <div class="sub-block-title">Two-Stage Pipeline</div>
+            <div class="pipeline-stages">
+                <div class="pipeline-stage"><div class="sub-block-title">Stage 0: Input Buffer</div><div class="block-content">a_stage0[0..3]<br>b_stage0[0..3]<br>valid_stage0</div></div>
+                <div class="pipeline-stage"><div class="sub-block-title">Stage 1: Operand Broadcast</div><div class="block-content">a_stage1[0..3] → Rows<br>b_stage1[0..3] → Cols<br>valid_stage1 → PE enable</div></div>
             </div>
         </div>
-
-        <div class="arrow-down">↓</div>
-
-        <!-- Main Module -->
-        <div class="main-module">
-            <div class="block-title" style="text-align: center; font-size: 16px;">npu_core.sv</div>
-
-            <!-- Control State Machine -->
-            <div class="sub-block">
-                <div class="sub-block-title">Control State Machine</div>
-                <div class="control-states">
-                    <div class="state-box">
-                        <div class="state-name">Idle</div>
-                        <div style="font-size: 9px;">Waiting for start</div>
-                    </div>
-                    <div class="state-box">
-                        <div class="state-name">Active</div>
-                        <div style="font-size: 9px;">Computation in progress</div>
-                    </div>
-                    <div class="state-box">
-                        <div class="state-name">Done</div>
-                        <div style="font-size: 9px;">Matrix multiply complete</div>
-                    </div>
-                    <div class="state-box">
-                        <div class="state-name">Streaming</div>
-                        <div style="font-size: 9px;">Output streaming phase</div>
-                    </div>
-                </div>
-                <div class="block-content" style="margin-top: 10px; text-align: center;">
-                    feed_count: 0 to ARRAY_SIZE | processed_count: Accumulation cycles
-                </div>
+        <div class="pe-array-container">
+            <div class="sub-block-title" style="text-align: center;">Processing Element Array (4×4)</div>
+            <div class="pe-grid">
+                <div class="pe-cell"><div class="pe-id">PE[0][0]</div>a[0]×b[0]</div>
+                <div class="pe-cell"><div class="pe-id">PE[0][1]</div>a[0]×b[1]</div>
+                <div class="pe-cell"><div class="pe-id">PE[0][2]</div>a[0]×b[2]</div>
+                <div class="pe-cell"><div class="pe-id">PE[0][3]</div>a[0]×b[3]</div>
+                <div class="pe-cell"><div class="pe-id">PE[1][0]</div>a[1]×b[0]</div>
+                <div class="pe-cell"><div class="pe-id">PE[1][1]</div>a[1]×b[1]</div>
+                <div class="pe-cell"><div class="pe-id">PE[1][2]</div>a[1]×b[2]</div>
+                <div class="pe-cell"><div class="pe-id">PE[1][3]</div>a[1]×b[3]</div>
+                <div class="pe-cell"><div class="pe-id">PE[2][0]</div>a[2]×b[0]</div>
+                <div class="pe-cell"><div class="pe-id">PE[2][1]</div>a[2]×b[1]</div>
+                <div class="pe-cell"><div class="pe-id">PE[2][2]</div>a[2]×b[2]</div>
+                <div class="pe-cell"><div class="pe-id">PE[2][3]</div>a[2]×b[3]</div>
+                <div class="pe-cell"><div class="pe-id">PE[3][0]</div>a[3]×b[0]</div>
+                <div class="pe-cell"><div class="pe-id">PE[3][1]</div>a[3]×b[1]</div>
+                <div class="pe-cell"><div class="pe-id">PE[3][2]</div>a[3]×b[2]</div>
+                <div class="pe-cell"><div class="pe-id">PE[3][3]</div>a[3]×b[3]</div>
             </div>
-
-            <!-- Pipeline Stages -->
-            <div class="sub-block">
-                <div class="sub-block-title">Two-Stage Pipeline</div>
-                <div class="pipeline-stages">
-                    <div class="pipeline-stage">
-                        <div class="sub-block-title">Stage 0: Input Buffer</div>
-                        <div class="block-content">
-                            a_stage0[0..3]<br>
-                            b_stage0[0..3]<br>
-                            valid_stage0
-                        </div>
-                    </div>
-                    <div class="pipeline-stage">
-                        <div class="sub-block-title">Stage 1: Operand Broadcast</div>
-                        <div class="block-content">
-                            a_stage1[0..3] → Rows<br>
-                            b_stage1[0..3] → Columns<br>
-                            valid_stage1 → PE enable
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PE Array -->
-            <div class="pe-array-container">
-                <div class="sub-block-title" style="text-align: center;">Processing Element Array (4×4)</div>
-                <div class="pe-grid">
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[0][0]</div>
-                        <div>a[0]×b[0]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[0][1]</div>
-                        <div>a[0]×b[1]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[0][2]</div>
-                        <div>a[0]×b[2]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[0][3]</div>
-                        <div>a[0]×b[3]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[1][0]</div>
-                        <div>a[1]×b[0]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[1][1]</div>
-                        <div>a[1]×b[1]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[1][2]</div>
-                        <div>a[1]×b[2]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[1][3]</div>
-                        <div>a[1]×b[3]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[2][0]</div>
-                        <div>a[2]×b[0]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[2][1]</div>
-                        <div>a[2]×b[1]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[2][2]</div>
-                        <div>a[2]×b[2]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[2][3]</div>
-                        <div>a[2]×b[3]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[3][0]</div>
-                        <div>a[3]×b[0]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[3][1]</div>
-                        <div>a[3]×b[1]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[3][2]</div>
-                        <div>a[3]×b[2]</div>
-                    </div>
-                    <div class="pe-cell">
-                        <div class="pe-id">PE[3][3]</div>
-                        <div>a[3]×b[3]</div>
-                    </div>
-                </div>
-                <div class="block-content" style="text-align: center; margin-top: 10px;">
-                    Each PE: acc[row][col] += a_stage1[row] × b_stage1[col]
-                </div>
-            </div>
-
-            <!-- Activation -->
-            <div class="sub-block">
-                <div class="sub-block-title">Activation Function</div>
-                <div class="block-content">
-                    ACT_FUNC = 0: Identity (pass-through)<br>
-                    ACT_FUNC = 1: ReLU (clamp negatives to 0)
-                </div>
-            </div>
+            <div class="block-content" style="text-align: center; margin-top: 3px; font-size: 7px; color: #555;">Each PE: acc[row][col] += a_stage1[row] × b_stage1[col]</div>
         </div>
-
-        <div class="arrow-down">↓</div>
-
-        <!-- Output Section -->
-        <div class="output-section">
-            <div class="block-title" style="text-align: center; font-size: 16px;">Output Generation</div>
-            
-            <div class="output-modes">
-                <div class="output-mode">
-                    <div class="sub-block-title">Packed Output</div>
-                    <div class="block-content">
-                        c_valid<br>
-                        c_out_flat[N×ACC_W-1:0]<br>
-                        All elements parallel
-                    </div>
-                </div>
-                <div class="output-mode">
-                    <div class="sub-block-title">Streaming Output</div>
-                    <div class="block-content">
-                        result_valid<br>
-                        result_data[ACC_W-1:0]<br>
-                        result_index[INDEX_W-1:0]<br>
-                        result_ready (input)<br>
-                        Row-major order
-                    </div>
-                </div>
-            </div>
-
-            <div style="text-align: center; margin-top: 15px;">
-                <div class="block-title" style="font-size: 12px;">Status Signals</div>
-                <div class="block-content">busy | done</div>
-            </div>
+        <div class="sub-block">
+            <div class="sub-block-title">Activation Function</div>
+            <div class="block-content">ACT_FUNC = 0: Identity (pass-through)<br>ACT_FUNC = 1: ReLU (clamp negatives to 0)</div>
         </div>
+    </div>
+    <div class="arrow-down">↓</div>
+    <div class="output-section">
+        <div class="block-title" style="text-align: center; font-size: 9px;">Output Generation</div>
+        <div class="output-modes">
+            <div class="output-mode"><div class="sub-block-title">Packed Output</div><div class="block-content">c_valid<br>c_out_flat[N×ACC_W-1:0]<br>All elements parallel</div></div>
+            <div class="output-mode"><div class="sub-block-title">Streaming Output</div><div class="block-content">result_valid<br>result_data[ACC_W-1:0]<br>result_index[INDEX_W-1:0]<br>result_ready (input)<br>Row-major order</div></div>
+        </div>
+        <div style="text-align: center; margin-top: 4px;"><div class="block-title" style="font-size: 7px;">Status Signals</div><div class="block-content">busy | done</div></div>
     </div>
 </body>
 </html>
-
